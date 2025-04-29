@@ -18,6 +18,13 @@ int win_width = 800;
 int win_height = 600;
 
 int showPlayer = 1;
+bool in_menu = true;
+
+float animation_time = 0.0f;
+
+GLuint titleTexture;
+GLuint playButtonTexture;
+GLuint bgTexture;
 
 /* Shaders */
 const char *vertex_code = R"(
@@ -67,6 +74,32 @@ const char *bg_fragment_code = R"(
  }
  )";
 
+ const char *menu_vertex_code = R"(
+    #version 330 core
+    layout (location = 0) in vec2 position;
+    layout (location = 1) in vec2 texCoord;
+    out vec2 TexCoord;
+    uniform mat4 menu_transform;  // Uniforme para transformação
+
+    void main()
+    {
+        gl_Position = menu_transform * vec4(position, 0.0, 1.0);
+        TexCoord = texCoord;  // As coordenadas de textura permanecem inalteradas
+    }
+)";
+
+const char *menu_fragment_code = R"(
+    #version 330 core
+    in vec2 TexCoord;
+    out vec4 FragColor;
+    uniform sampler2D texture1;
+
+    void main()
+    {
+        FragColor = texture(texture1, TexCoord);
+    }
+)";
+
 /* Functions */
 void display(void);
 void reshape(int, int);
@@ -74,7 +107,6 @@ void keyboard(unsigned char, int, int);
 void timer(int);
 void initData(void);
 void initShaders(void);
-void loadBackgroundTexture(const char *filename);
 void reset(void);
 
 void display()
@@ -91,12 +123,36 @@ void display()
     glUniform1f(bgOffsetLoc, bg_offset);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
+    if (in_menu) {
+        glUseProgram(menu_program); 
+        glBindTexture(GL_TEXTURE_2D, titleTexture);  
+        glBindVertexArray(titleVAO);  
+        glDrawArrays(GL_TRIANGLES, 0, 6);  
+    
+        
+        glUseProgram(menu_program);  
+        float scale = 1.0f + 0.05f * sin(animation_time);  // Cálculo da escala animada
+    
+        glm::mat4 play_model = glm::mat4(1.0f);  
+        play_model = glm::scale(play_model, glm::vec3(scale, scale, 1.0f));  
+    
+        int transformLoc = glGetUniformLocation(menu_program, "menu_transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(play_model));  
+    
+        glBindTexture(GL_TEXTURE_2D, playButtonTexture);  
+        glBindVertexArray(playVAO);  
+        glDrawArrays(GL_TRIANGLES, 0, 6);  
+    
+        glutSwapBuffers();  
+        return;
+    }
+
     // 2. Jogador (quadrado)
     glUseProgram(program);
 
     int offsetLoc = glGetUniformLocation(program, "offset");
 
-    if (showPlayer)
+    if (showPlayer && !in_menu)
     {
         glm::mat4 model = glm::mat4(1.0f);
 
@@ -169,8 +225,7 @@ void reshape(int width, int height)
 void keyboard(unsigned char key, int x, int y)
 {
     if (key == 27 || key == 'q' || key == 'Q')
-        exit(0);
-
+        in_menu = true;
     if (key == ' ')
     {
         if (!jumping)
@@ -182,8 +237,33 @@ void keyboard(unsigned char key, int x, int y)
     }
 }
 
+void mouse(int button, int state, int x, int y) {
+    if (in_menu && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        // converter x, y da tela para coordenadas OpenGL
+        float gl_x = (float)x / win_width * 2.0f - 1.0f;
+        float gl_y = 1.0f - (float)y / win_height * 2.0f;
+
+        if (gl_x >= -0.2f && gl_x <= 0.2f && gl_y >= -0.5f && gl_y <= -0.1f) {
+            in_menu = false;
+            glutPostRedisplay();
+        }
+    }
+}
+
+
 void timer(int value)
 {
+
+    if (in_menu) {
+        bg_offset += bg_scroll_speed;
+        if (bg_offset > 1.0f)
+            bg_offset -= 1.0f;
+        animation_time += 0.05f;
+        glutPostRedisplay();
+        glutTimerFunc(16, timer, 0); 
+        return;
+    }
+
     bool resetAllObs = true;
     bool resetAllBl = true;
 
@@ -273,10 +353,10 @@ void timer(int value)
         velocity_y = 0.0f;
     }
 
-    bg_offset += bg_scroll_speed;
-
-    if (bg_offset > 1.0f)
-        bg_offset -= 1.0f;
+        bg_offset += bg_scroll_speed;
+        if (bg_offset > 1.0f)
+            bg_offset -= 1.0f;
+    
 
     if (jumping) {
         player_y += velocity_y;
@@ -313,36 +393,40 @@ void initData()
         initObstacle(i, ground_y);
     }
     initBackground();
+    initTitle();
+    initPlay();
 }
 
-void loadBackgroundTexture(const char *filename)
-{
+
+GLuint loadTexture(const char *filename) {
     int width, height, nrChannels;
     unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glGenTextures(1, &bgTexture);
-        glBindTexture(GL_TEXTURE_2D, bgTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+    GLuint textureID;
+    if (data) {
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
                      (nrChannels == 4 ? GL_RGBA : GL_RGB), GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         stbi_image_free(data);
+        return textureID;
+    } else {
+        printf("Erro ao carregar a textura %s\n", filename);
+        return 0;
     }
-    else
-    {
-        printf("Falha ao carregar textura!\n");
-        stbi_image_free(data);
-    }
+}
+
+void loadTextures() {
+    bgTexture = loadTexture("bg.png");  
+    titleTexture = loadTexture("title.png");
+    playButtonTexture = loadTexture("play.png");
 }
 
 void initShaders()
 {
     program = createShaderProgram(vertex_code, fragment_code);
     bg_program = createShaderProgram(bg_vertex_code, bg_fragment_code);
+    menu_program = createShaderProgram(menu_vertex_code, menu_fragment_code);
 }
 
 int main(int argc, char **argv)
@@ -356,13 +440,17 @@ int main(int argc, char **argv)
     glewExperimental = GL_TRUE;
     glewInit();
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     initData();
-    loadBackgroundTexture("img.png");
+    loadTextures();
     initShaders();
 
     glutReshapeFunc(reshape);
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouse);
     glutTimerFunc(0, timer, 0);
 
     glutMainLoop();

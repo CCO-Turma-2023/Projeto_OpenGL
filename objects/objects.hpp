@@ -10,8 +10,10 @@
 #include "../lib/stb_image.h"
 
 
-extern int program, bg_program;
-extern unsigned int bgVAO, bgVBO, bgTexture;
+extern int program, bg_program, menu_program;
+extern unsigned int bgVAO, bgVBO;
+extern unsigned int titleVAO, titleVBO;
+extern unsigned int playVAO, playVBO;
 extern unsigned int playerVAO, playerVBO;
 
 extern float player_y;
@@ -57,3 +59,5 @@ void initPlayer ();
 void initObstacle (float x, float y);
 void initBlockObstacle (float x, float width, float y);
 void initBackground ();
+void initTitle ();
+void initPlay ();

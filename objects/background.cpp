@@ -1,9 +1,7 @@
 #include "objects.hpp"
 
-
 float bg_offset = 0.0f;
 float bg_scroll_speed = 0.0011f;
-
 
 void initBackground ()
 {
