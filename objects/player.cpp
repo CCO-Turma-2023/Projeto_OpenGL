@@ -11,21 +11,24 @@ void initPlayer ()
 {
     // Jogador (quadrado)
     float playerVertices[] = {
-        -0.05f, -0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
-         0.05f, -0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
-        -0.05f,  0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
-         0.05f, -0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
-         0.05f,  0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
-        -0.05f,  0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
+        //   x                             y                             u       v (invertido)
+        -player_width / 2.0f, -player_height / 2.0f,  0.0f, 1.0f, // Canto inferior esquerdo
+         player_width / 2.0f, -player_height / 2.0f,  1.0f, 1.0f, // Canto inferior direito
+        -player_width / 2.0f,  player_height / 2.0f,  0.0f, 0.0f, // Canto superior esquerdo
+    
+         player_width / 2.0f, -player_height / 2.0f,  1.0f, 1.0f, // Canto inferior direito
+         player_width / 2.0f,  player_height / 2.0f,  1.0f, 0.0f, // Canto superior direito
+        -player_width / 2.0f,  player_height / 2.0f,  0.0f, 0.0f, // Canto superior esquerdo
     };
-
+    
     glGenVertexArrays(1, &playerVAO);
     glGenBuffers(1, &playerVBO);
     glBindVertexArray(playerVAO);
     glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(playerVertices), playerVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);            // posição
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))); // texCoord
     glEnableVertexAttribArray(1);
+
 }

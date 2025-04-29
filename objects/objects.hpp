@@ -9,7 +9,6 @@
 #include "../lib/utils.h"
 #include "../lib/stb_image.h"
 
-
 extern int program, bg_program, menu_program;
 extern unsigned int bgVAO, bgVBO;
 extern unsigned int titleVAO, titleVBO;
@@ -25,7 +24,9 @@ extern float current_ground_y;
 
 extern float object_speed;
 
-extern float block_height;
+extern float block_height, block_width;
+extern float spike_height, spike_width;
+extern float player_height, player_width;
 
 extern float bg_offset;
 extern float bg_scroll_speed;
@@ -57,7 +58,7 @@ extern std::vector<Block> blocks;
 
 void initPlayer ();
 void initObstacle (float x, float y);
-void initBlockObstacle (float x, float width, float y);
+void initBlockObstacle (float x, float y);
 void initBackground ();
 void initTitle ();
 void initPlay ();

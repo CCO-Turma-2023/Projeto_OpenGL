@@ -24,29 +24,33 @@ float animation_time = 0.0f;
 
 GLuint titleTexture;
 GLuint playButtonTexture;
+GLuint blockTexture;
+GLuint SpikeTexture;
+GLuint PlayerTexture;
 GLuint bgTexture;
 
 /* Shaders */
 const char *vertex_code = R"(
- #version 330 core
- layout (location = 0) in vec3 position;
- layout (location = 1) in vec3 color;
- out vec3 vColor;
- uniform mat4 offset;
- void main()
- {
-     gl_Position = offset * vec4(position, 1.0);
-     vColor = color;
- }
- )";
+    #version 330 core
+    layout (location = 0) in vec2 position;
+    layout (location = 1) in vec2 texCoord;
+    out vec2 TexCoord;
+    uniform mat4 offset;
+    void main()
+    {
+        gl_Position = offset * vec4(position, 0.0, 1.0);
+        TexCoord = texCoord;
+    }
+    )";
 
 const char *fragment_code = R"(
  #version 330 core
- in vec3 vColor;
+ in vec2 TexCoord;
  out vec4 FragColor;
+ uniform sampler2D texture1;
  void main()
  {
-     FragColor = vec4(vColor, 1.0f);
+     FragColor = texture(texture1, TexCoord);
  }
  )";
 
@@ -149,7 +153,7 @@ void display()
 
     // 2. Jogador (quadrado)
     glUseProgram(program);
-
+    
     int offsetLoc = glGetUniformLocation(program, "offset");
 
     if (showPlayer && !in_menu)
@@ -166,14 +170,19 @@ void display()
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(playerVAO);
+
+        glBindTexture(GL_TEXTURE_2D, PlayerTexture);
+       
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
     for (const auto &obs : obstacles)
     {
+        
         glm::mat4 obstacleModel = glm::translate(glm::mat4(1.0f), glm::vec3(obs.x, obs.y, 0.0f));
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(obstacleModel));
         glBindVertexArray(obs.VAO);
+        glBindTexture(GL_TEXTURE_2D, SpikeTexture);
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
@@ -182,6 +191,7 @@ void display()
         glm::mat4 blockModel = glm::translate(glm::mat4(1.0f), glm::vec3(bl.x, bl.y, 0.0f));
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(blockModel));
         glBindVertexArray(bl.VAO);
+        glBindTexture(GL_TEXTURE_2D, blockTexture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
@@ -378,18 +388,26 @@ void timer(int value)
     glutTimerFunc(16, timer, 0);
 }
 
+
 void initData()
 {
     initPlayer();
     for(float i = 1.0; i <= 3.0; i += 0.5){
         initObstacle(i, ground_y);
     }
-    initBlockObstacle(4.0, 0.9, ground_y);
-    initObstacle(4.0, ground_y + block_height);
-    initObstacle(4.1, ground_y + block_height);
-    initBlockObstacle(5.0, 0.2, -0.7);
-    initBlockObstacle(5.5, 0.2, -0.6);
-    for(float i = 4.5; i <= 6.2; i += 0.1){
+    for(float i = 4.0; i <= 4.75; i += 0.1){
+        initBlockObstacle(i, ground_y);
+    }
+    initObstacle(4.375, ground_y + block_height);
+    for(float i = 5.15; i <= 5.6; i += 0.1){
+        initBlockObstacle(i, -0.7);
+    }
+    for(float i = 6.0; i <= 6.45; i += 0.1){
+        initBlockObstacle(i, -0.6);
+    }
+    initBlockObstacle(6.80, -0.5);
+    initBlockObstacle(7.15, -0.4);
+    for(float i = 4.80; i <= 7.6; i += 0.1){
         initObstacle(i, ground_y);
     }
     initBackground();
@@ -402,12 +420,23 @@ GLuint loadTexture(const char *filename) {
     int width, height, nrChannels;
     unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
     GLuint textureID;
+
     if (data) {
         glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
+
+        // Permite repetição da textura
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        // Filtros de minificação/magnificação
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
                      (nrChannels == 4 ? GL_RGBA : GL_RGB), GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
+
         stbi_image_free(data);
         return textureID;
     } else {
@@ -416,10 +445,14 @@ GLuint loadTexture(const char *filename) {
     }
 }
 
+
 void loadTextures() {
-    bgTexture = loadTexture("bg.png");  
+    bgTexture = loadTexture("bg.png");
     titleTexture = loadTexture("title.png");
     playButtonTexture = loadTexture("play.png");
+    blockTexture = loadTexture("block.png");
+    SpikeTexture = loadTexture("spike.png");
+    PlayerTexture = loadTexture("player.jpg");
 }
 
 void initShaders()
@@ -443,8 +476,8 @@ int main(int argc, char **argv)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    initData();
     loadTextures();
+    initData();
     initShaders();
 
     glutReshapeFunc(reshape);
