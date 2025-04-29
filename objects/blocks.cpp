@@ -2,18 +2,16 @@
 
 std::vector<Block> blocks;
 
-float block_speed = 0.02f;
-float block_x;
-
-void initBlockObstacle(float x, float width)
+void initBlockObstacle(float x, float width, float y)
 {
-    const float height = 0.1f; // Altura fixa do bloco
+    const float height = block_height; 
 
     Block newBlock;
     newBlock.x = x;
+    newBlock.initial_x = x;
     newBlock.width = width;
-    newBlock.height = height; // Agora temos a altura do bloco
-    newBlock.y = -0.8f;
+    newBlock.height = height; 
+    newBlock.y = y;
 
     float blockVertices[] = {
         -width / 2.0f, -height / 2.0f, 0.0f,   0.0f, 1.0f, 0.0f, // Canto inferior esquerdo

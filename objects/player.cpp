@@ -1,6 +1,6 @@
 #include "objects.hpp"
 
-float player_y = -0.8f;
+float player_y = ground_y;
 float velocity_y = 0.0f;
 bool jumping = false;
 
@@ -11,12 +11,12 @@ void initPlayer ()
 {
     // Jogador (quadrado)
     float playerVertices[] = {
-        -0.05f, -0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
-         0.05f, -0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
-        -0.05f,  0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
-         0.05f, -0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
-         0.05f,  0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
-        -0.05f,  0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
+        -0.05f, -0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
+         0.05f, -0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
+        -0.05f,  0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
+         0.05f, -0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
+         0.05f,  0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
+        -0.05f,  0.05f, 0.0f,  1.0f, 1.0f, 0.0f,
     };
 
     glGenVertexArrays(1, &playerVAO);

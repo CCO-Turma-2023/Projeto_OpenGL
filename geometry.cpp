@@ -1,6 +1,6 @@
 /**
- * @file runner.cpp
- * Jogo estilo runner: quadrado pula obstáculos girando no próprio centro
+ * @file geometry.cpp
+ * Jogo estilo geometry dash
  */
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -84,6 +84,7 @@ void display()
 
     // 1. Fundo
     glUseProgram(bg_program);
+
     glBindVertexArray(bgVAO);
     glBindTexture(GL_TEXTURE_2D, bgTexture);
     int bgOffsetLoc = glGetUniformLocation(bg_program, "bg_offset");
@@ -114,7 +115,7 @@ void display()
 
     for (const auto &obs : obstacles)
     {
-        glm::mat4 obstacleModel = glm::translate(glm::mat4(1.0f), glm::vec3(obs.x, -0.8f, 0.0f));
+        glm::mat4 obstacleModel = glm::translate(glm::mat4(1.0f), glm::vec3(obs.x, obs.y, 0.0f));
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(obstacleModel));
         glBindVertexArray(obs.VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -122,7 +123,7 @@ void display()
 
     for (const auto &bl : blocks)
     {
-        glm::mat4 blockModel = glm::translate(glm::mat4(1.0f), glm::vec3(bl.x, -0.8f, 0.0f));
+        glm::mat4 blockModel = glm::translate(glm::mat4(1.0f), glm::vec3(bl.x, bl.y, 0.0f));
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(blockModel));
         glBindVertexArray(bl.VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -134,13 +135,13 @@ void display()
 void reset()
 {
     bg_scroll_speed = 0.0f;
-    obstacle_speed = 0.0f;
+    object_speed = 0.0f;
     showPlayer = 0;
     display();
     std::this_thread::sleep_for(std::chrono::seconds(1));
     showPlayer = 1;
     bg_scroll_speed = 0.0011f;
-    obstacle_speed = 0.02f;
+    object_speed = 0.02f;
 
     for (auto &obs : obstacles)
     {
@@ -152,7 +153,7 @@ void reset()
         bl.x = bl.initial_x;
     }
 
-    player_y = -0.8f;
+    player_y = ground_y;
     jumping = false;
     angle = 0.0f;
     display();
@@ -188,7 +189,7 @@ void timer(int value)
 
     for (auto &obs : obstacles)
     {
-        obs.x -= obstacle_speed;
+        obs.x -= object_speed;
 
         if (obs.x > -1.2f)
         {
@@ -198,7 +199,7 @@ void timer(int value)
 
     for (auto &bl : blocks)
     {
-        bl.x -= block_speed;
+        bl.x -= object_speed;
 
         if (bl.x > -1.2f)
         {
@@ -220,59 +221,73 @@ void timer(int value)
 
     for (auto &obs : obstacles)
     {
-        if (obs.x < -0.65f && obs.x > -0.75f &&
-            player_y - 0.05f <= -0.8f + 0.023f)
-        {
-            std::cout << "morreu otário" << std::endl;
+        float obs_left = obs.x - obs.width / 4.0f;
+        float obs_right = obs.x + obs.width / 4.0f;
+        float player_left = -0.7f - 0.05f;
+        float player_right = -0.7f + 0.05f;
+        float obs_top = obs.y + obs.height;
+        float obs_bottom = obs.y - obs.height;
+        if (
+            player_right > obs_left && player_left < obs_right &&
+            player_y < obs_top && player_y > obs_bottom
+        ) {
             reset();
         }
     }
 
     bool on_block = false;
 
-    for (auto &bl : blocks)
-    {
-        if (bl.x < -0.65f + (bl.width / 2.0f) && bl.x > -0.75f - (bl.width / 2.0f))
-        {
+    for (const auto& bl : blocks) {
+        float block_left = bl.x - bl.width / 2.0f;
+        float block_right = bl.x + bl.width / 2.0f;
+        float player_left = -0.7f - 0.05f;
+        float player_right = -0.7f + 0.05f;
+        float block_top = bl.y + bl.height;
+        float block_bottom = bl.y - bl.height;
 
-            if (player_y - 0.05f >= bl.y + (bl.height / 2.0f) &&
-                player_y - 0.05f <= bl.y + (bl.height / 2.0f) + 0.05f &&
-                velocity_y <= 0.0f)
-            {
-
-                ground_y = bl.y + (bl.height / 2.0f);
+        if (player_right > block_left && player_left < block_right) {
+            if ((player_y >= block_top - 0.03f && player_y <= block_top + 0.03f) && velocity_y <= 0.0f) {
+                current_ground_y = block_top;
                 on_block = true;
+                jumping = false;
+                velocity_y = 0.0f;
+                player_y = block_top;
+                angle = 0.0f;
+                break;
+            }else{
+                on_block = false;
             }
+        }
 
-            else if (player_y - 0.05f < bl.y + (bl.height / 2.0f))
-            {
-                std::cout << "morreu otário" << std::endl;
-                reset();
-            }
+        if (
+            player_right > block_left && player_left < block_right &&
+            player_y < block_top && player_y > block_bottom
+        ) {
+            reset();
         }
     }
 
-    if (!on_block)
-    {
-        ground_y = -0.8f;
+    if (!on_block && !jumping && (current_ground_y != ground_y)) {
+        current_ground_y = ground_y;
+        jumping= true;
+        velocity_y = 0.0f;
     }
 
     bg_offset += bg_scroll_speed;
+
     if (bg_offset > 1.0f)
         bg_offset -= 1.0f;
 
-    if (jumping)
-    {
+    if (jumping) {
         player_y += velocity_y;
         velocity_y -= 0.003f;
-
+        
         angle -= 8.0f;
         if (angle < -360.0f)
             angle += 360.0f;
-
-        if (player_y <= ground_y)
-        {
-            player_y = ground_y;
+        
+        if (player_y <= current_ground_y) {
+            player_y = current_ground_y;
             velocity_y = 0.0f;
             jumping = false;
             angle = 0.0f;
@@ -286,11 +301,17 @@ void timer(int value)
 void initData()
 {
     initPlayer();
-    initObstacle(1.0);
-    initObstacle(1.5);
-    initObstacle(2.0);
-    initObstacle(3.0);
-    initBlockObstacle(4.0, 0.5);
+    for(float i = 1.0; i <= 3.0; i += 0.5){
+        initObstacle(i, ground_y);
+    }
+    initBlockObstacle(4.0, 0.9, ground_y);
+    initObstacle(4.0, ground_y + block_height);
+    initObstacle(4.1, ground_y + block_height);
+    initBlockObstacle(5.0, 0.2, -0.7);
+    initBlockObstacle(5.5, 0.2, -0.6);
+    for(float i = 4.5; i <= 6.2; i += 0.1){
+        initObstacle(i, ground_y);
+    }
     initBackground();
 }
 

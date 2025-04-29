@@ -18,13 +18,12 @@ extern float player_y;
 extern float velocity_y;
 extern bool jumping;
 
-extern float obstacle_x;
 extern float ground_y;
+extern float current_ground_y;
 
-extern float obstacle_speed;
+extern float object_speed;
 
-extern float block_x;
-extern float block_speed;
+extern float block_height;
 
 extern float bg_offset;
 extern float bg_scroll_speed;
@@ -34,6 +33,9 @@ extern float angle_increment;
 
 struct Obstacle {
     float x;
+    float y;
+    float width;
+    float height;
     float initial_x;
     GLuint VAO, VBO;
 };
@@ -52,6 +54,6 @@ extern std::vector<Obstacle> obstacles;
 extern std::vector<Block> blocks;
 
 void initPlayer ();
-void initObstacle (float x);
-void initBlockObstacle (float x, float width);
+void initObstacle (float x, float y);
+void initBlockObstacle (float x, float width, float y);
 void initBackground ();

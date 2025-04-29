@@ -2,19 +2,21 @@
 
 std::vector<Obstacle> obstacles;
 
-float obstacle_speed = 0.02f;
 float obstacle_x;
 
-void initObstacle(float x)
+void initObstacle(float x, float y)
 {
     Obstacle newObstacle;
     newObstacle.x = x;
+    newObstacle.y = y;
+    newObstacle.width = 0.1f;
+    newObstacle.height = 0.1f;
     newObstacle.initial_x = x;
 
     float obstacleVertices[] = {
-        -0.05f, -0.05f, 0.0f,  0.0f, 1.0f, 0.0f,
-         0.05f, -0.05f, 0.0f,  0.0f, 1.0f, 0.0f,
-         0.0f,   0.05f, 0.0f,  0.0f, 1.0f, 0.0f,
+        -0.05f, -0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
+         0.05f, -0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
+         0.0f,   0.05f, 0.0f,  1.0f, 0.0f, 0.0f,
     };
     glGenVertexArrays(1, &newObstacle.VAO);
     glGenBuffers(1, &newObstacle.VBO);
