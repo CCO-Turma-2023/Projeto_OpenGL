@@ -382,26 +382,39 @@ void timer(int value)
 void initData()
 {
     initPlayer();
+    
     for(float i = 1.0; i <= 3.0; i += 0.5){
         initObstacle(i, ground_y);
     }
-    for(float i = 4.0; i <= 4.75; i += 0.1){
+    for(float i = 4.0; i <= 4.7; i += 0.1){
         initBlockObstacle(i, ground_y);
     }
+
     initObstacle(4.375, ground_y + block_height);
-    for(float i = 5.15; i <= 5.6; i += 0.1){
-        initBlockObstacle(i, -0.7);
+
+    for (float i = 5.1; i <= 5.6; i += 0.1) {
+        for (float j = 0; j <= 0.2; j += 0.1) {  
+            initBlockObstacle(i, ground_y + j);
+        }
     }
-    for(float i = 6.0; i <= 6.45; i += 0.1){
-        initBlockObstacle(i, -0.6);
+    
+   
+    for (float i = 6.0; i <= 6.4; i += 0.1) {
+        for (float j = 0; j <= 0.3; j += 0.1) {  
+            initBlockObstacle(i, ground_y + j);
+        }
     }
+
     initBlockObstacle(6.80, -0.5);
     initBlockObstacle(6.90, -0.5);
     initBlockObstacle(7.15, -0.4);
     initBlockObstacle(7.25, -0.4);
+
     for(float i = 4.80; i <= 7.8; i += 0.1){
-        initObstacle(i, ground_y);
+        if((i >= 4.80 && i <= 5.0) || (i >= 5.60 && i <= 5.90) || (i >= 6.4 && i <= 7.8))
+            initObstacle(i, ground_y);
     }
+
     initBackground();
     initTitle();
     initPlay();
