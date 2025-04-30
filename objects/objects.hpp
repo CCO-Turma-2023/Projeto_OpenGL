@@ -15,7 +15,7 @@ extern unsigned int titleVAO, titleVBO;
 extern unsigned int playVAO, playVBO;
 extern unsigned int playerVAO, playerVBO;
 
-extern float player_y;
+extern float player_y, player_x;
 extern float velocity_y;
 extern bool jumping;
 
@@ -33,6 +33,22 @@ extern float bg_scroll_speed;
 
 extern float angle;
 extern float angle_increment;
+
+extern  bool resetAllObs;
+extern bool resetAllBl;
+
+extern bool on_block;
+extern float block_left;
+extern float block_right;
+extern float block_top;
+extern float block_bottom;
+
+extern float obs_left;
+extern float obs_right;
+extern float obs_top;
+extern float player_left;
+extern float player_right;
+extern float obs_bottom;
 
 struct Obstacle {
     float x;

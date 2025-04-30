@@ -160,7 +160,7 @@ void display()
     {
         glm::mat4 model = glm::mat4(1.0f);
 
-        model = glm::translate(model, glm::vec3(-0.7f, player_y, 0.0f));
+        model = glm::translate(model, glm::vec3(player_x, player_y, 0.0f));
 
         if (jumping)
         {
@@ -261,6 +261,7 @@ void mouse(int button, int state, int x, int y) {
 }
 
 
+
 void timer(int value)
 {
 
@@ -274,8 +275,8 @@ void timer(int value)
         return;
     }
 
-    bool resetAllObs = true;
-    bool resetAllBl = true;
+    resetAllObs = true;
+    resetAllBl = true;
 
     for (auto &obs : obstacles)
     {
@@ -311,12 +312,10 @@ void timer(int value)
 
     for (auto &obs : obstacles)
     {
-        float obs_left = obs.x - obs.width / 4.0f;
-        float obs_right = obs.x + obs.width / 4.0f;
-        float player_left = -0.7f - 0.05f;
-        float player_right = -0.7f + 0.05f;
-        float obs_top = obs.y + obs.height;
-        float obs_bottom = obs.y - obs.height;
+        obs_left = obs.x - obs.width / 4.0f;
+        obs_right = obs.x + obs.width / 4.0f;
+        obs_top = obs.y + obs.height;
+        obs_bottom = obs.y - obs.height;
         if (
             player_right > obs_left && player_left < obs_right &&
             player_y < obs_top && player_y > obs_bottom
@@ -325,48 +324,35 @@ void timer(int value)
         }
     }
 
-    bool on_block = false;
+    on_block = false;
 
     for (const auto& bl : blocks) {
-        float block_left = bl.x - bl.width / 2.0f;
-        float block_right = bl.x + bl.width / 2.0f;
-        float player_left = -0.7f - 0.05f;
-        float player_right = -0.7f + 0.05f;
-        float block_top = bl.y + bl.height;
-        float block_bottom = bl.y - bl.height;
+        block_left = bl.x - bl.width / 2.0f;
+        block_right = bl.x + bl.width / 2.0f;
+        block_top = bl.y + bl.height;
+        block_bottom = bl.y - bl.height;
 
         if (player_right > block_left && player_left < block_right) {
-            if ((player_y >= block_top - 0.03f && player_y <= block_top + 0.03f) && velocity_y <= 0.0f) {
+            on_block = true;
+            if ((player_y >= block_top - 0.01f && player_y <= block_top + 0.01f) && velocity_y <= 0.0f) {
                 current_ground_y = block_top;
-                on_block = true;
-                jumping = false;
                 velocity_y = 0.0f;
                 player_y = block_top;
                 angle = 0.0f;
-                break;
-            }else{
-                on_block = false;
+            }else if (player_y < block_top && player_y > block_bottom) {
+                reset();
             }
-        }
-
-        if (
-            player_right > block_left && player_left < block_right &&
-            player_y < block_top && player_y > block_bottom
-        ) {
-            reset();
         }
     }
 
     if (!on_block && !jumping && (current_ground_y != ground_y)) {
-        current_ground_y = ground_y;
         jumping= true;
         velocity_y = 0.0f;
     }
 
-        bg_offset += bg_scroll_speed;
-        if (bg_offset > 1.0f)
-            bg_offset -= 1.0f;
-    
+    bg_offset += bg_scroll_speed;
+    if (bg_offset > 1.0f)
+        bg_offset -= 1.0f;
 
     if (jumping) {
         player_y += velocity_y;
@@ -375,6 +361,10 @@ void timer(int value)
         angle -= 8.0f;
         if (angle < -360.0f)
             angle += 360.0f;
+
+        if(!on_block){
+            current_ground_y = ground_y;
+        }
         
         if (player_y <= current_ground_y) {
             player_y = current_ground_y;
@@ -406,8 +396,10 @@ void initData()
         initBlockObstacle(i, -0.6);
     }
     initBlockObstacle(6.80, -0.5);
+    initBlockObstacle(6.90, -0.5);
     initBlockObstacle(7.15, -0.4);
-    for(float i = 4.80; i <= 7.6; i += 0.1){
+    initBlockObstacle(7.25, -0.4);
+    for(float i = 4.80; i <= 7.8; i += 0.1){
         initObstacle(i, ground_y);
     }
     initBackground();
@@ -447,12 +439,12 @@ GLuint loadTexture(const char *filename) {
 
 
 void loadTextures() {
-    bgTexture = loadTexture("bg.png");
-    titleTexture = loadTexture("title.png");
-    playButtonTexture = loadTexture("play.png");
-    blockTexture = loadTexture("block.png");
-    SpikeTexture = loadTexture("spike.png");
-    PlayerTexture = loadTexture("player.jpg");
+    bgTexture = loadTexture("assets/bg.png");
+    titleTexture = loadTexture("assets/title.png");
+    playButtonTexture = loadTexture("assets/play.png");
+    blockTexture = loadTexture("assets/block.png");
+    SpikeTexture = loadTexture("assets/spike.png");
+    PlayerTexture = loadTexture("assets/player.jpg");
 }
 
 void initShaders()
