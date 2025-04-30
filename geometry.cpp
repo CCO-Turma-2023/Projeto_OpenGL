@@ -128,19 +128,24 @@ void display()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     if (in_menu) {
-        glUseProgram(menu_program); 
+        glUseProgram(menu_program);
+        glm::mat4 title_model = glm::mat4(1.0f);  
+        title_model = glm::scale(title_model, glm::vec3(1.0f, 1.0f, 1.0f));  
+    
+        int transformLoc = glGetUniformLocation(menu_program, "menu_transform");
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(title_model)); 
         glBindTexture(GL_TEXTURE_2D, titleTexture);  
         glBindVertexArray(titleVAO);  
         glDrawArrays(GL_TRIANGLES, 0, 6);  
-    
-        
+      
         glUseProgram(menu_program);  
         float scale = 1.0f + 0.05f * sin(animation_time);  // Cálculo da escala animada
     
         glm::mat4 play_model = glm::mat4(1.0f);  
         play_model = glm::scale(play_model, glm::vec3(scale, scale, 1.0f));  
     
-        int transformLoc = glGetUniformLocation(menu_program, "menu_transform");
+        transformLoc = glGetUniformLocation(menu_program, "menu_transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(play_model));  
     
         glBindTexture(GL_TEXTURE_2D, playButtonTexture);  
