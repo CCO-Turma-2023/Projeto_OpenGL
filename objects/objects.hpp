@@ -13,9 +13,11 @@ extern int program, bg_program, menu_program;
 extern unsigned int bgVAO, bgVBO;
 extern unsigned int titleVAO, titleVBO;
 extern unsigned int playVAO, playVBO;
+extern unsigned int portalVAO, portalVBO;
 extern unsigned int playerVAO, playerVBO;
 
 extern float player_y, player_x;
+extern float portal_y, portal_x, portal_initial_x;
 extern float velocity_y;
 extern bool jumping;
 
@@ -27,15 +29,13 @@ extern float object_speed;
 extern float block_height, block_width;
 extern float spike_height, spike_width;
 extern float player_height, player_width;
+extern float portal_height, portal_width;
 
 extern float bg_offset;
 extern float bg_scroll_speed;
 
 extern float angle;
 extern float angle_increment;
-
-extern  bool resetAllObs;
-extern bool resetAllBl;
 
 extern bool on_block;
 extern float block_left;
@@ -68,6 +68,7 @@ struct Block {
     GLuint VAO, VBO;
 };
 
+
 extern std::vector<Obstacle> obstacles;
 
 extern std::vector<Block> blocks;
@@ -76,5 +77,6 @@ void initPlayer ();
 void initObstacle (float x, float y);
 void initBlockObstacle (float x, float y);
 void initBackground ();
+void Portal();
 void initTitle ();
 void initPlay ();

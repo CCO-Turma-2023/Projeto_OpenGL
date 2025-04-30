@@ -19,6 +19,7 @@ int win_height = 600;
 
 int showPlayer = 1;
 bool in_menu = true;
+bool final = false;
 
 float animation_time = 0.0f;
 
@@ -27,6 +28,7 @@ GLuint playButtonTexture;
 GLuint blockTexture;
 GLuint SpikeTexture;
 GLuint PlayerTexture;
+GLuint PortalTexture;
 GLuint bgTexture;
 
 /* Shaders */
@@ -138,8 +140,7 @@ void display()
         glBindTexture(GL_TEXTURE_2D, titleTexture);  
         glBindVertexArray(titleVAO);  
         glDrawArrays(GL_TRIANGLES, 0, 6);  
-      
-        glUseProgram(menu_program);  
+       
         float scale = 1.0f + 0.05f * sin(animation_time);  // Cálculo da escala animada
     
         glm::mat4 play_model = glm::mat4(1.0f);  
@@ -200,6 +201,12 @@ void display()
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
+    glm::mat4 portalModel = glm::translate(glm::mat4(1.0f), glm::vec3(portal_x, portal_y, 0.0f));
+    glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(portalModel));
+    glBindVertexArray(portalVAO);
+    glBindTexture(GL_TEXTURE_2D, PortalTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
     glutSwapBuffers();
 }
 
@@ -213,6 +220,8 @@ void reset()
     showPlayer = 1;
     bg_scroll_speed = 0.0011f;
     object_speed = 0.02f;
+
+    portal_x = portal_initial_x;
 
     for (auto &obs : obstacles)
     {
@@ -243,7 +252,7 @@ void keyboard(unsigned char key, int x, int y)
         in_menu = true;
     if (key == ' ')
     {
-        if (!jumping)
+        if (!jumping && !final)
         {
             velocity_y = 0.035f;
             jumping = true;
@@ -266,7 +275,6 @@ void mouse(int button, int state, int x, int y) {
 }
 
 
-
 void timer(int value)
 {
 
@@ -280,39 +288,34 @@ void timer(int value)
         return;
     }
 
-    resetAllObs = true;
-    resetAllBl = true;
+    portal_x -= object_speed;
+
+    if(portal_x <= -0.10f) final = true;
+    
+    if(portal_x <= -0.59f){
+        velocity_y = 0.035f;
+        player_y += velocity_y;
+        if(portal_x <= -0.7f){
+            showPlayer = 0;
+            display();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            in_menu = true;
+            reset();
+            final = false;
+        }
+    }
+    
 
     for (auto &obs : obstacles)
     {
         obs.x -= object_speed;
 
-        if (obs.x > -1.2f)
-        {
-            resetAllObs = false;
-        }
     }
 
     for (auto &bl : blocks)
     {
         bl.x -= object_speed;
 
-        if (bl.x > -1.2f)
-        {
-            resetAllBl = false;
-        }
-    }
-
-    if (resetAllObs && resetAllBl)
-    {
-        for (auto &obs : obstacles)
-        {
-            obs.x = obs.initial_x;
-        }
-        for (auto &bl : blocks)
-        {
-            bl.x = bl.initial_x;
-        }
     }
 
     for (auto &obs : obstacles)
@@ -420,6 +423,8 @@ void initData()
             initObstacle(i, ground_y);
     }
 
+    Portal();
+
     initBackground();
     initTitle();
     initPlay();
@@ -463,6 +468,7 @@ void loadTextures() {
     blockTexture = loadTexture("assets/block.png");
     SpikeTexture = loadTexture("assets/spike.png");
     PlayerTexture = loadTexture("assets/player.jpg");
+    PortalTexture = loadTexture("assets/portal.png");
 }
 
 void initShaders()
