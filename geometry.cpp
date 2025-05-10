@@ -20,6 +20,7 @@ int win_height = 600;
 int showPlayer = 1;
 bool in_menu = true;
 bool final = false;
+bool pressingJump = false;
 
 float animation_time = 0.0f;
 
@@ -299,10 +300,14 @@ void keyboard(unsigned char key, int x, int y)
             velocity_y = 0.035f;
             jumping = true;
             angle = 0.0f;
+
+            std::cout << "oi\n";
         }
         
-
+        pressingJump = true;
         bufferJump = 2;
+
+        std::cout << "keyboard " << jumping << std::endl;
 
         return;
     }
@@ -322,6 +327,7 @@ void SpecialInput(int key, int x, int y)
         }
 
         bufferJump = 2;
+        pressingJump = true;
 
         return;
     }
@@ -459,6 +465,7 @@ void timer(int value)
         
         if (player_y <= current_ground_y) {
             player_y = current_ground_y;
+
             velocity_y = 0.0f;
             jumping = false;
             angle = 0.0f;
