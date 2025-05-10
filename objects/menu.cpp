@@ -1,6 +1,7 @@
 #include "objects.hpp"
 
 void initTitle ()
+// Inicializa o título "Geometry Dash"
 {
     float titleWidth = 0.8f;   // Largura em relação ao viewport (-1 a 1)
     float titleHeight = 0.2f; // Altura proporcional
@@ -26,9 +27,10 @@ void initTitle ()
 }
 
 void initPlay ()
+// Inicializa o botão de play
 {
-    float playSize = 0.2f;
-    float playY = -0.3f; // abaixo do centro
+    float playSize = 0.2f; // Definição do tamanho inicial do botão play
+    float playY = -0.3f; // Definição da posição abaixo do centro
 
     float PlayVertices[] = {
         -playSize, -playSize + playY,  0.0f, 1.0f,

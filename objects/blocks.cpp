@@ -3,6 +3,7 @@
 std::vector<Block> blocks;
 
 void initBlockObstacle(float x, float y)
+// Inicializa blocos que montam a fase
 {
     Block newBlock;
     newBlock.x = x;

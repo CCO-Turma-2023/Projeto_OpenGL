@@ -1,5 +1,6 @@
 #include "objects.hpp"
 
+// Definindo variaveis globais
 int program, bg_program, menu_program;
 float block_height = 0.1f, block_width = 0.1f;
 float spike_height = 0.1, spike_width = 0.1f;

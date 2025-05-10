@@ -23,6 +23,8 @@ bool final = false;
 
 float animation_time = 0.0f;
 
+int bufferJump = 0;
+
 GLuint titleTexture;
 GLuint playButtonTexture;
 GLuint blockTexture;
@@ -113,7 +115,7 @@ void keyboard(unsigned char, int, int);
 void timer(int);
 void initData(void);
 void initShaders(void);
-void reset(void);
+void reset(int in_menu);
 
 void display()
 {
@@ -123,6 +125,7 @@ void display()
     // 1. Fundo
     glUseProgram(bg_program);
 
+    // Desenhar o Fundo
     glBindVertexArray(bgVAO);
     glBindTexture(GL_TEXTURE_2D, bgTexture);
     int bgOffsetLoc = glGetUniformLocation(bg_program, "bg_offset");
@@ -130,22 +133,26 @@ void display()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     if (in_menu) {
+        // Renderizar o menu
+        
         glUseProgram(menu_program);
         glm::mat4 title_model = glm::mat4(1.0f);  
         title_model = glm::scale(title_model, glm::vec3(1.0f, 1.0f, 1.0f));  
     
         int transformLoc = glGetUniformLocation(menu_program, "menu_transform");
 
+        // Desenhar o título
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(title_model)); 
         glBindTexture(GL_TEXTURE_2D, titleTexture);  
         glBindVertexArray(titleVAO);  
         glDrawArrays(GL_TRIANGLES, 0, 6);  
        
-        float scale = 1.0f + 0.05f * sin(animation_time);  // Cálculo da escala animada
-    
+        // Aplicar a escala no botão de play
+        float scale = 1.0f + 0.05f * sin(animation_time);
         glm::mat4 play_model = glm::mat4(1.0f);  
         play_model = glm::scale(play_model, glm::vec3(scale, scale, 1.0f));  
     
+        // Desenhar o botão de play
         transformLoc = glGetUniformLocation(menu_program, "menu_transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(play_model));  
     
@@ -162,17 +169,23 @@ void display()
     
     int offsetLoc = glGetUniformLocation(program, "offset");
 
-    if (showPlayer && !in_menu)
+    if (showPlayer)
     {
+        // Renderizar o jogador
+
+        // Matriz transformadora
         glm::mat4 model = glm::mat4(1.0f);
 
+        // Aplicando translação do jogador para a parte esquerda da tela
         model = glm::translate(model, glm::vec3(player_x, player_y, 0.0f));
 
         if (jumping)
         {
+            // Função de rotação para que o objeto, ao pular, dê um giro em torno do próprio eixo durante o salto
             model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
         }
 
+        // Renderizar o jogador com a matriz transformadora
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(playerVAO);
@@ -182,9 +195,12 @@ void display()
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
+    // A translação desses objetos (obstáculos e blocos) são aplicados para move-los
+    // em direção ao jogador. O valor dessa translação é atualizado no timer
+    
     for (const auto &obs : obstacles)
-    {
-        
+    {   
+        // Aplicar translação em cada obstáculo e renderizar ele
         glm::mat4 obstacleModel = glm::translate(glm::mat4(1.0f), glm::vec3(obs.x, obs.y, 0.0f));
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(obstacleModel));
         glBindVertexArray(obs.VAO);
@@ -194,6 +210,7 @@ void display()
 
     for (const auto &bl : blocks)
     {
+        // Aplicar translação em cada bloco e renderizar ele
         glm::mat4 blockModel = glm::translate(glm::mat4(1.0f), glm::vec3(bl.x, bl.y, 0.0f));
         glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(blockModel));
         glBindVertexArray(bl.VAO);
@@ -201,6 +218,7 @@ void display()
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
+    // Aplicar translação no portal e renderizar ele
     glm::mat4 portalModel = glm::translate(glm::mat4(1.0f), glm::vec3(portal_x, portal_y, 0.0f));
     glUniformMatrix4fv(offsetLoc, 1, GL_FALSE, glm::value_ptr(portalModel));
     glBindVertexArray(portalVAO);
@@ -210,13 +228,20 @@ void display()
     glutSwapBuffers();
 }
 
-void reset()
+void reset(int in_menu)
+// Volta os objetos para o estado inicial da fase após morrer ou finalizar a fase
 {
     bg_scroll_speed = 0.0f;
     object_speed = 0.0f;
     showPlayer = 0;
+    bufferJump = 0;
     display();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    if (!in_menu)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
     showPlayer = 1;
     bg_scroll_speed = 0.0011f;
     object_speed = 0.02f;
@@ -234,11 +259,13 @@ void reset()
     }
 
     player_y = ground_y;
+    // Impede que o player inicialize a fase pulando
     jumping = false;
     angle = 0.0f;
     display();
 }
 
+// Aplica janela 
 void reshape(int width, int height)
 {
     win_width = width;
@@ -248,18 +275,58 @@ void reshape(int width, int height)
 
 void keyboard(unsigned char key, int x, int y)
 {
+    // Binds para entrar no Menu:
     if (key == 27 || key == 'q' || key == 'Q')
+    {
         in_menu = true;
+        return;
+    }
+
+    // Bind para pular:
     if (key == ' ')
     {
+        if (in_menu)
+        {
+            in_menu = false;
+            reset(1);
+
+            return;
+        }
+
         if (!jumping && !final)
         {
+            // Função de pular
             velocity_y = 0.035f;
             jumping = true;
             angle = 0.0f;
         }
+        
+
+        bufferJump = 2;
+
+        return;
     }
 }
+
+
+void SpecialInput(int key, int x, int y)
+{
+    if (key == GLUT_KEY_UP)
+    {
+        if (!jumping && !final)
+        {
+            // Função de pular
+            velocity_y = 0.035f;
+            jumping = true;
+            angle = 0.0f;
+        }
+
+        bufferJump = 2;
+
+        return;
+    }
+}
+
 
 void mouse(int button, int state, int x, int y) {
     if (in_menu && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
@@ -290,8 +357,10 @@ void timer(int value)
 
     portal_x -= object_speed;
 
+    // Se o portal chegar em determinada posição, é considerado fim do jogo
     if(portal_x <= -0.10f) final = true;
     
+    // Impede que o player pule a partir de determinada área do jogo (perto do final)
     if(portal_x <= -0.59f){
         velocity_y = 0.035f;
         player_y += velocity_y;
@@ -300,7 +369,8 @@ void timer(int value)
             display();
             std::this_thread::sleep_for(std::chrono::seconds(1));
             in_menu = true;
-            reset();
+            // Reseta o portal para a posição inicial novamente
+            reset(0);
             final = false;
         }
     }
@@ -328,9 +398,22 @@ void timer(int value)
             player_right > obs_left && player_left < obs_right &&
             player_y < obs_top && player_y > obs_bottom
         ) {
-            reset();
+            reset(0);
         }
     }
+
+    if (bufferJump > 0)
+    {
+        if (!jumping && !final)
+        {
+            // Função de pular
+            velocity_y = 0.035f;
+            jumping = true;
+            angle = 0.0f;
+        }
+        bufferJump--;
+    }
+
 
     on_block = false;
 
@@ -348,7 +431,7 @@ void timer(int value)
                 player_y = block_top;
                 angle = 0.0f;
             }else if (player_y < block_top && player_y > block_bottom) {
-                reset();
+                reset(0);
             }
         }
     }
@@ -430,7 +513,7 @@ void initData()
     initPlay();
 }
 
-
+// Aplicando texturas
 GLuint loadTexture(const char *filename) {
     int width, height, nrChannels;
     unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
@@ -461,6 +544,7 @@ GLuint loadTexture(const char *filename) {
 }
 
 
+// Carrega todas as texturas 
 void loadTextures() {
     bgTexture = loadTexture("assets/bg.png");
     titleTexture = loadTexture("assets/title.png");
@@ -486,6 +570,7 @@ int main(int argc, char **argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowSize(win_width, win_height);
     glutCreateWindow("Geometry Copy Dash");
+    glutSpecialFunc(SpecialInput);
     glewExperimental = GL_TRUE;
     glewInit();
 

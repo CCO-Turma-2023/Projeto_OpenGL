@@ -4,8 +4,8 @@ float bg_offset = 0.0f;
 float bg_scroll_speed = 0.0011f;
 
 void initBackground ()
+// Inicializa fundo
 {
-    // Fundo
     float bgVertices[] = {
         -1.0f, -1.0f,    0.0f, 1.0f,
          1.0f, -1.0f,    1.0f, 1.0f,

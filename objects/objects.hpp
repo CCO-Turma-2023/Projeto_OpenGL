@@ -8,6 +8,7 @@
 #include <glm/gtx/string_cast.hpp>
 #include "../lib/utils.h"
 #include "../lib/stb_image.h"
+#include <vector>
 
 extern int program, bg_program, menu_program;
 extern unsigned int bgVAO, bgVBO;

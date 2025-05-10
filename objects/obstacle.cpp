@@ -5,6 +5,7 @@ std::vector<Obstacle> obstacles;
 float obstacle_x;
 
 void initObstacle(float x, float y)
+// Inicializa obstáculos, no programa principal é aplicado a textura
 {
     Obstacle newObstacle;
     newObstacle.x = x;
@@ -14,7 +15,7 @@ void initObstacle(float x, float y)
     newObstacle.initial_x = x;
 
     float obstacleVertices[] = {
-        //   x                             y                             u       v (invertido)
+        //   x                      y         u     v (invertido)
         -spike_width / 2.0f, -spike_height / 2.0f,  0.0f, 1.0f,  // Canto inferior esquerdo
          spike_width / 2.0f, -spike_height / 2.0f,  1.0f, 1.0f,  // Canto inferior direito
          0.0f,    spike_height / 2.0f,  0.5f, 0.0f,    // Canto superior central
